@@ -11,25 +11,38 @@ class MoviesController < ApplicationController
   end
 
   def index
-    order = params[:order_by]
-    ratings = params[:ratings]
-    
     # prepare for movies and the ratings checkbox options
     @movies = Movie.all
     @all_ratings = Movie.all_ratings
     @checked_ratings = Hash[@all_ratings.collect { |item| [item, "1"] } ]
 
+    # set to keeping the flash after redirecting 
+    # flash.keep
+    # I tested the flash messages can be displayed correctly after redirecting, so I'm not gonna use flash.keep here.
+
     # if ratings are specified, filter the movie with required ratings
-    if ratings
-      @movies = @movies.where(:rating => ratings.keys)
-      @checked_ratings = ratings
+    if params[:ratings]
+      @movies = @movies.where(:rating => params[:ratings].keys)
+      @checked_ratings = params[:ratings]
+      
+      # set session for checkbox
+      session[:ratings] = params[:ratings]
+    elsif session[:ratings]
+      # redirect for keeping restful api url and use the params in session
+      redirect_to movies_path(:ratings => session[:ratings], :order_by => params[:order_by])
+      return
     end
     
     # if order_by param exists, sort by this param
-    if order == "title"
-      @movies = @movies.order("title asc")
-    elsif order == "release_date"
-      @movies = @movies.order("release_date asc")
+    if params[:order_by] and ['title', 'release_date'].include? params[:order_by]
+      @movies = @movies.order("#{params[:order_by]} asc")
+      
+      # set session for order_by
+      session[:order_by] = params[:order_by]
+    elsif session[:order_by]
+      # redirect for keeping restful api url and use the params in session
+      redirect_to movies_path(:ratings => params[:ratings], :order_by => session[:order_by])
+      return
     end
     
   end
