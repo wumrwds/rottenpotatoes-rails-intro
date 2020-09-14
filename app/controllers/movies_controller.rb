@@ -12,14 +12,26 @@ class MoviesController < ApplicationController
 
   def index
     order = params[:order_by]
+    ratings = params[:ratings]
     
-    if order == "title"
-      @movies = Movie.order("title asc")
-    elsif order == "release_date"
-      @movies = Movie.all.order("release_date asc")
-    else
-      @movies = Movie.all
+    # prepare for movies and the ratings checkbox options
+    @movies = Movie.all
+    @all_ratings = Movie.all_ratings
+    @checked_ratings = Hash[@all_ratings.collect { |item| [item, "1"] } ]
+
+    # if ratings are specified, filter the movie with required ratings
+    if ratings
+      @movies = @movies.where(:rating => ratings.keys)
+      @checked_ratings = ratings
     end
+    
+    # if order_by param exists, sort by this param
+    if order == "title"
+      @movies = @movies.order("title asc")
+    elsif order == "release_date"
+      @movies = @movies.order("release_date asc")
+    end
+    
   end
 
   def new
